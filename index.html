@@ -48,6 +48,7 @@
         background-color: var(--color-canvas-subtle);
         border-top-left-radius: 6px;
         border-top-right-radius: 6px;
+        box-sizing: border-box;
       }
 
       canvas {
@@ -66,21 +67,23 @@
       import marked from "https://unpkg.com/marked@3.0.7/lib/marked.esm.js";
       import DOMPurify from "https://unpkg.com/dompurify@2.3.3/dist/purify.es.js";
 
-      const data = await fetch(
-        "https://raw.githubusercontent.com/robherley/robherley/main/README.md"
-      );
+      (async () => {
+        const data = await fetch(
+          "https://raw.githubusercontent.com/robherley/robherley/main/README.md"
+        );
 
-      if (!data.ok) {
-        readme.innerHTML = `
+        if (!data.ok) {
+          readme.innerHTML = `
         <div class="blankslate">
           <h3 class="mb-1">Can't reach GitHub</h3>
           <p>Well this is awkward.</p>
         </div>
         `;
-      }
+        }
 
-      const text = await data.text();
-      readme.innerHTML = DOMPurify.sanitize(marked(text));
+        const text = await data.text();
+        readme.innerHTML = DOMPurify.sanitize(marked(text));
+      })();
 
       const canvas = document.querySelector("canvas");
 
