@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en" data-color-mode="dark" data-dark-theme="dark_dimmed">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💾</text></svg>"
+    />
+    <link
+      href="https://unpkg.com/@primer/css@^18.0.1/dist/primer.css"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        background: transparent;
+      }
+
+      #readme {
+        max-width: 52rem;
+        width: 100%;
+        position: relative;
+      }
+
+      #readme::after {
+        content: "";
+        position: absolute;
+        height: 0.75rem;
+        width: 0.75rem;
+        border-radius: 50%;
+        top: 0.65rem;
+        left: 0.5rem;
+        background-color: #e74c3c;
+        box-shadow: 1.25rem 0 0 0 #f1c40f, 2.5rem 0 0 0 #2ecc71;
+      }
+
+      #readme::before {
+        content: "📄 README.md";
+        font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas,
+          Liberation Mono, monospace !important;
+        font-size: 0.75rem;
+        position: absolute;
+        text-align: center;
+        top: 0;
+        left: 0;
+        width: 100%;
+        padding: 0.5rem 0;
+        background-color: var(--color-canvas-subtle);
+        border-top-left-radius: 6px;
+        border-top-right-radius: 6px;
+      }
+
+      canvas {
+        position: fixed;
+        top: 0;
+        left: 0;
+        image-rendering: pixelated;
+        z-index: -1;
+      }
+    </style>
+    <script
+      defer
+      src="https://unpkg.com/feather-icons@4.28.0/dist/feather.min.js"
+    ></script>
+    <script type="module">
+      import marked from "https://unpkg.com/marked@3.0.7/lib/marked.esm.js";
+      import DOMPurify from "https://unpkg.com/dompurify@2.3.3/dist/purify.es.js";
+
+      const data = await fetch(
+        "https://raw.githubusercontent.com/robherley/robherley/main/README.md"
+      );
+
+      if (!data.ok) {
+        readme.innerHTML = `
+        <div class="blankslate">
+          <h3 class="mb-1">Can't reach GitHub</h3>
+          <p>Well this is awkward.</p>
+        </div>
+        `;
+      }
+
+      const text = await data.text();
+      readme.innerHTML = DOMPurify.sanitize(marked(text));
+
+      const canvas = document.querySelector("canvas");
+
+      const resizeCanvas = () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      };
+      resizeCanvas();
+
+      window.addEventListener("resize", resizeCanvas);
+
+      const ctx = canvas.getContext("2d");
+
+      const half = canvas.height / 2;
+      const size = 2;
+      const gap = 20;
+      const frequency = 0.015;
+      const wavelength = 0.025;
+
+      const cssvar = (v) =>
+        getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+
+      const drawWave = (multiplier = 1, color = "white") => {
+        const points = window.innerWidth / gap;
+        const amp = window.innerHeight * 0.25;
+
+        ctx.fillStyle = color;
+
+        for (let i = 0; i < points; i++) {
+          const y = half + Math.sin(i * wavelength + offset * multiplier) * amp;
+          ctx.fillRect(i * gap, y, size, size);
+        }
+      };
+
+      let offset = frequency;
+      const draw = () => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawWave(1, cssvar("--color-fg-default"));
+        drawWave(1.5, cssvar("--color-ansi-blue"));
+        drawWave(2, cssvar("--color-ansi-cyan"));
+        drawWave(2.5, cssvar("--color-ansi-magenta"));
+
+        offset += frequency;
+
+        setTimeout(() => {
+          window.requestAnimationFrame(draw);
+        }, 1000 / 60);
+      };
+
+      draw();
+
+      feather.replace({ "stroke-width": 1.25 });
+    </script>
+    <title>reb.gg</title>
+  </head>
+  <body class="d-flex flex-column flex-items-center px-2 py-8">
+    <div class="d-flex flex-items-center flex-1">
+      <img
+        src="https://github.com/robherley.png"
+        alt="rob's face"
+        class="avatar hide-sm"
+        style="width: 12rem; height: 12rem"
+      />
+      <div
+        class="ml-sm-6 d-flex flex-column flex-items-center flex-sm-items-start"
+      >
+        <div class="d-flex flex-items-center">
+          <img
+            src="https://github.com/robherley.png"
+            alt="rob's face"
+            class="avatar hide-md hide-lg hide-xl mr-4"
+            style="width: 5rem; height: 5rem"
+          />
+          <div>
+            <h1 class="f1-light">Rob Herley</h1>
+            <h2 class="h4 text-normal text-mono color-fg-muted">
+              Software Engineer
+              <a
+                href="http://github.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                >@GitHub</a
+              >
+            </h2>
+          </div>
+        </div>
+        <div class="BtnGroup d-block mt-4">
+          <a
+            class="BtnGroup-item btn btn-sm"
+            href="https://github.com/robherley"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <i class="mt-2" data-feather="github"></i>
+          </a>
+          <a
+            class="BtnGroup-item btn btn-sm"
+            href="https://linkedin.com/in/robherley"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <i class="mt-2" data-feather="linkedin"></i>
+          </a>
+          <a
+            class="BtnGroup-item btn btn-sm"
+            href="https://twitter.com/robherley"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <i class="mt-2" data-feather="twitter"></i>
+          </a>
+          <a
+            class="BtnGroup-item btn btn-sm"
+            href="https://instagram.com/robherley"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <i class="mt-2" data-feather="instagram"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+    <article id="readme" class="Box markdown-body flex-1 mt-6 p-4 pt-8">
+      <div class="blankslate">
+        <h3 class="mb-1">Loading<span class="AnimatedEllipsis"></span></h3>
+        <p>
+          <span role="img" aria-label="hand waving">👋</span> hey there, please
+          stand by while i load something
+        </p>
+      </div>
+    </article>
+    <canvas></canvas>
+  </body>
+</html>
