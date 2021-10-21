@@ -16,14 +16,32 @@
         background: transparent;
       }
 
-      #readme {
-        max-width: 52rem;
-        width: 100%;
-        position: relative;
-        box-sizing: border-box;
+      canvas {
+        position: fixed;
+        top: 0;
+        left: 0;
+        image-rendering: pixelated;
+        z-index: -1;
       }
 
-      #readme::after {
+      .readme {
+        max-width: 52rem;
+        width: 100%;
+      }
+
+      .titlebar {
+        width: 100%;
+        font-size: 0.75rem;
+        text-align: center;
+        width: 100%;
+        padding: 0.5rem 0;
+        background-color: var(--color-canvas-subtle);
+        border-top-left-radius: 6px;
+        border-top-right-radius: 6px;
+        position: relative;
+      }
+
+      .titlebar::before {
         content: "";
         position: absolute;
         height: 0.75rem;
@@ -34,31 +52,6 @@
         background-color: #e74c3c;
         box-shadow: 1.25rem 0 0 0 #f1c40f, 2.5rem 0 0 0 #2ecc71;
       }
-
-      #readme::before {
-        content: "📄 README.md";
-        font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas,
-          Liberation Mono, monospace !important;
-        font-size: 0.75rem;
-        position: absolute;
-        text-align: center;
-        top: 0;
-        left: 0;
-        width: 100%;
-        padding: 0.5rem 0;
-        background-color: var(--color-canvas-subtle);
-        border-top-left-radius: 6px;
-        border-top-right-radius: 6px;
-        box-sizing: border-box;
-      }
-
-      canvas {
-        position: fixed;
-        top: 0;
-        left: 0;
-        image-rendering: pixelated;
-        z-index: -1;
-      }
     </style>
     <script
       defer
@@ -68,24 +61,50 @@
       import marked from "https://unpkg.com/marked@3.0.7/lib/marked.esm.js";
       import DOMPurify from "https://unpkg.com/dompurify@2.3.3/dist/purify.es.js";
 
-      (async () => {
-        const data = await fetch(
-          "https://raw.githubusercontent.com/robherley/robherley/main/README.md"
-        );
+      // 🌐 Social
+      const links = [
+        ["github", "https://github.com/robherley"],
+        ["linkedin", "https://linkedin.com/in/robherley"],
+        ["twitter", "https://twitter.com/robherley"],
+        ["instagram", "https://instagram.com/robherley"],
+      ];
+      const social = document.querySelector("[data-replace-social]");
+      social.innerHTML = links
+        .map(
+          ([icon, url]) => `
+            <a
+              class="BtnGroup-item btn btn-sm"
+              href="${url}"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <i class="mt-2" data-feather="${icon}"></i>
+            </a>`
+        )
+        .join("");
+      feather.replace({ "stroke-width": 1.25 });
 
+      // 📄 Markdown
+      const replaceMarkdown = async (element) => {
+        const url = element.getAttribute("data-replace-md");
+
+        const data = await fetch(url);
         if (!data.ok) {
-          readme.innerHTML = `
-        <div class="blankslate">
-          <h3 class="mb-1">Can't reach GitHub</h3>
-          <p>Well this is awkward.</p>
-        </div>
-        `;
+          element.innerHTML = `
+          <div class="blankslate">
+            <h3 class="mb-1">Can't reach URL</h3>
+            <p>Well this is awkward.</p>
+          </div>
+          `;
         }
 
         const text = await data.text();
-        readme.innerHTML = DOMPurify.sanitize(marked(text));
-      })();
+        element.innerHTML = DOMPurify.sanitize(marked(text));
+      };
+      const elems = [...document.querySelectorAll("[data-replace-md]")];
+      Promise.all(elems.map(replaceMarkdown)).catch(console.error);
 
+      // 🌊 Waves
       const canvas = document.querySelector("canvas");
 
       const resizeCanvas = () => {
@@ -135,8 +154,6 @@
       };
 
       draw();
-
-      feather.replace({ "stroke-width": 1.25 });
     </script>
     <title>reb.gg</title>
   </head>
@@ -171,49 +188,25 @@
             </h2>
           </div>
         </div>
-        <div class="BtnGroup d-block mt-4">
-          <a
-            class="BtnGroup-item btn btn-sm"
-            href="https://github.com/robherley"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <i class="mt-2" data-feather="github"></i>
-          </a>
-          <a
-            class="BtnGroup-item btn btn-sm"
-            href="https://linkedin.com/in/robherley"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <i class="mt-2" data-feather="linkedin"></i>
-          </a>
-          <a
-            class="BtnGroup-item btn btn-sm"
-            href="https://twitter.com/robherley"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <i class="mt-2" data-feather="twitter"></i>
-          </a>
-          <a
-            class="BtnGroup-item btn btn-sm"
-            href="https://instagram.com/robherley"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <i class="mt-2" data-feather="instagram"></i>
-          </a>
-        </div>
+        <div class="BtnGroup d-block mt-4" data-replace-social=""></div>
       </div>
     </div>
-    <article id="readme" class="Box markdown-body flex-1 mt-6 p-4 pt-8">
-      <div class="blankslate">
-        <h3 class="mb-1">Loading<span class="AnimatedEllipsis"></span></h3>
-        <p>
-          <span role="img" aria-label="hand waving">👋</span> hey there, please
-          stand by while i load something
-        </p>
+    <article class="readme Box flex-1 mt-6">
+      <div class="titlebar text-mono">
+        <span role="img" aria-label="file">📄</span>
+        README.md
+      </div>
+      <div
+        class="markdown-body p-4"
+        data-replace-md="https://raw.githubusercontent.com/robherley/robherley/main/README.md"
+      >
+        <div class="blankslate">
+          <h3 class="mb-1">Loading<span class="AnimatedEllipsis"></span></h3>
+          <p>
+            <span role="img" aria-label="hand waving">👋</span> hey there,
+            please stand by while i load something
+          </p>
+        </div>
       </div>
     </article>
     <canvas></canvas>
