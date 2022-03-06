@@ -14,6 +14,7 @@
     <style>
       body {
         background: transparent;
+        max-width: 52rem;
       }
 
       canvas {
@@ -22,11 +23,6 @@
         left: 0;
         image-rendering: pixelated;
         z-index: -1;
-      }
-
-      .readme {
-        max-width: 52rem;
-        width: 100%;
       }
 
       .titlebar {
@@ -54,42 +50,16 @@
       }
     </style>
     <script async defer data-domain="reb.gg" src="https://a.reb.gg/js/a.js"></script>
-    <script
-      defer
-      src="https://unpkg.com/feather-icons@4.28.0/dist/feather.min.js"
-    ></script>
     <script type="module">
-      import marked from "https://unpkg.com/marked@3.0.7/lib/marked.esm.js";
-      import DOMPurify from "https://unpkg.com/dompurify@2.3.3/dist/purify.es.js";
+      // 📄 Readme
+      const replaceHTML = async (element) => {
+        const url = element.getAttribute("data-replace-html");
 
-      // 🌐 Social
-      const links = [
-        ["github", "https://github.com/robherley"],
-        ["linkedin", "https://linkedin.com/in/robherley"],
-        ["twitter", "https://twitter.com/robherley"],
-        ["instagram", "https://instagram.com/robherley"],
-      ];
-      const social = document.querySelector("[data-replace-social]");
-      social.innerHTML = links
-        .map(
-          ([icon, url]) => `
-            <a
-              class="BtnGroup-item btn btn-sm"
-              href="${url}"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <i class="mt-2" data-feather="${icon}"></i>
-            </a>`
-        )
-        .join("");
-      feather.replace({ "stroke-width": 1.25 });
-
-      // 📄 Markdown
-      const replaceMarkdown = async (element) => {
-        const url = element.getAttribute("data-replace-md");
-
-        const data = await fetch(url);
+        const data = await fetch(url, {
+          headers: {
+            'accept': 'application/vnd.github.v3.html'
+          }
+        });
         if (!data.ok) {
           element.innerHTML = `
           <div class="blankslate">
@@ -99,11 +69,16 @@
           `;
         }
 
-        const text = await data.text();
-        element.innerHTML = DOMPurify.sanitize(marked(text));
+        const rawHTML = await data.text();
+        element.innerHTML = rawHTML;
       };
-      const elems = [...document.querySelectorAll("[data-replace-md]")];
-      Promise.all(elems.map(replaceMarkdown)).catch(console.error);
+
+      try {
+        const readmeContainer = document.querySelector("[data-replace-html]");
+        replaceHTML(readmeContainer);
+      } catch (e) {
+        console.log(e)
+      }
 
       // 🌊 Waves
       const canvas = document.querySelector("canvas");
@@ -158,7 +133,7 @@
     </script>
     <title>reb.gg</title>
   </head>
-  <body class="d-flex flex-column flex-items-center px-2 py-8">
+  <body class="d-flex flex-column flex-items-center px-2 py-8 mx-auto my-0">
     <div class="d-flex flex-items-center flex-1">
       <img
         src="https://github.com/robherley.png"
@@ -189,20 +164,34 @@
             </h2>
           </div>
         </div>
-        <div class="BtnGroup d-block mt-4" data-replace-social=""></div>
+        <div class="BtnGroup d-block mt-4">
+          <a class="BtnGroup-item btn btn-sm" href="https://github.com/robherley" target="_blank" rel="noopener noreferrer">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" class="feather feather-github mt-2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
+          </a>
+          <a class="BtnGroup-item btn btn-sm" href="https://linkedin.com/in/robherley" target="_blank" rel="noopener noreferrer">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" class="feather feather-linkedin mt-2"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg>
+          </a>
+          <a class="BtnGroup-item btn btn-sm" href="https://twitter.com/robherley" target="_blank" rel="noopener noreferrer">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" class="feather feather-twitter mt-2"><path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"></path></svg>
+          </a>
+          <a class="BtnGroup-item btn btn-sm" href="https://instagram.com/robherley" target="_blank" rel="noopener noreferrer">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" class="feather feather-instagram mt-2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+          </a>
+        </div>
       </div>
     </div>
-    <a class="btn btn-large mt-6" type="button" href="https://blog.reb.gg" target="_blank" rel="noopener noreferrer">
-      <span class="Counter color-bg-accent-emphasis color-fg-on-emphasis mr-1">New</span> Check out my blog <svg class="octicon" viewBox="0 0 16 16" width="16" height="16"><path fill-rule="evenodd" d="M6.22 3.22a.75.75 0 011.06 0l4.25 4.25a.75.75 0 010 1.06l-4.25 4.25a.75.75 0 01-1.06-1.06L9.94 8 6.22 4.28a.75.75 0 010-1.06z"></path></svg>
-    </a>
-    <article class="readme Box flex-1 mt-6">
+    <div class="flash flex-1 mt-4 width-full">
+      <svg class="octicon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><path fill-rule="evenodd" d="M8 1.5a6.5 6.5 0 100 13 6.5 6.5 0 000-13zM0 8a8 8 0 1116 0A8 8 0 010 8zm6.5-.25A.75.75 0 017.25 7h1a.75.75 0 01.75.75v2.75h.25a.75.75 0 010 1.5h-2a.75.75 0 010-1.5h.25v-2h-.25a.75.75 0 01-.75-.75zM8 6a1 1 0 100-2 1 1 0 000 2z"></path></svg>
+      Interested in virtualization, automation and more? Come visit my blog at: <a href="https://blog.reb.gg" target="_blank" rel="noopener noreferrer">https://blog.reb.gg</a>
+    </div>
+    <article class="Box flex-1 mt-4 width-full">
       <div class="titlebar text-mono">
         <span role="img" aria-label="file">📄</span>
         README.md
       </div>
       <div
         class="markdown-body p-4"
-        data-replace-md="https://raw.githubusercontent.com/robherley/robherley/main/README.md"
+        data-replace-html="https://api.github.com/repos/robherley/robherley/readme"
       >
         <div class="blankslate">
           <h3 class="mb-1">Loading<span class="AnimatedEllipsis"></span></h3>
