@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <style>
+      *,
+      *::before,
+      *::after {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --fg: #e8e8e8;
+        --fg-muted: #999;
+        --bg: #0a0a0a;
+        --border: #2a2a2a;
+      }
+
+      body {
+        font-family: ui-monospace, 
+          Menlo, Monaco,
+          "Cascadia Mono", "Segoe UI Mono",
+          "Roboto Mono",
+          "Oxygen Mono",
+          "Ubuntu Mono",
+          "Source Code Pro",
+          "Fira Mono",
+          "Droid Sans Mono",
+          "Consolas", "Courier New", monospace;
+        background: var(--bg);
+        color: var(--fg);
+        max-width: 52rem;
+        margin: 4rem auto 0 auto;
+      }
+
+      canvas {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        image-rendering: pixelated;
+        z-index: 0;
+        pointer-events: none;
+      }
+
+      body > *:not(canvas) {
+        position: relative;
+        z-index: 1;
+      }
+
+      a {
+        color: var(--fg);
+        text-decoration: none;
+        transition: opacity 0.15s ease;
+      }
+
+      a:hover {
+        opacity: 0.7;
+      }
+
+      .container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 1.5rem;
+      }
+
+      .pic {
+        --corner-color: var(--fg-muted);
+        --corner-len: 0.5rem;
+        --corner-w: 0.125rem;
+        display: block;
+        width: 12rem;
+        height: 12rem;
+        padding: 0.75rem;
+        background:
+          linear-gradient(var(--corner-color), var(--corner-color)) top left / var(--corner-len) var(--corner-w) no-repeat,
+          linear-gradient(var(--corner-color), var(--corner-color)) top left / var(--corner-w) var(--corner-len) no-repeat,
+          linear-gradient(var(--corner-color), var(--corner-color)) top right / var(--corner-len) var(--corner-w) no-repeat,
+          linear-gradient(var(--corner-color), var(--corner-color)) top right / var(--corner-w) var(--corner-len) no-repeat,
+          linear-gradient(var(--corner-color), var(--corner-color)) bottom left / var(--corner-len) var(--corner-w) no-repeat,
+          linear-gradient(var(--corner-color), var(--corner-color)) bottom left / var(--corner-w) var(--corner-len) no-repeat,
+          linear-gradient(var(--corner-color), var(--corner-color)) bottom right / var(--corner-len) var(--corner-w) no-repeat,
+          linear-gradient(var(--corner-color), var(--corner-color)) bottom right / var(--corner-w) var(--corner-len) no-repeat;
+      }
+
+      .info h1 {
+        font-size: 1.75rem;
+        font-weight: 400;
+        letter-spacing: -0.02em;
+      }
+
+      .info h2 {
+        font-size: 0.875rem;
+        font-weight: 400;
+        color: var(--fg-muted);
+        margin-top: 0.25rem;
+      }
+
+      .info h2 a {
+        color: var(--fg);
+        border-bottom: 1px solid var(--border);
+      }
+
+      .links {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 0.5rem;
+        margin-top: 1.25rem;
+        font-size: 0.8125rem;
+      }
+
+      .links span {
+        color: var(--fg-muted);
+        font-size: 0.375rem;
+        opacity: 0.5;
+      }
+
+      .links a {
+        color: var(--fg-muted);
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 1px;
+        transition: color 0.15s ease, border-color 0.15s ease;
+      }
+
+      .links a:hover {
+        color: var(--fg);
+        border-color: var(--fg-muted);
+        opacity: 1;
+      }
+    </style>
+    <script defer data-domain="reb.gg" src="https://a.reb.gg/js/script.js"></script>
+    <script type="module">
+      const canvas = document.querySelector("canvas");
+      const ctx = canvas.getContext("2d");
+
+      // Bayer 4x4 threshold matrix (normalized to 0-1)
+      const bayer4 = [
+        [0 / 16, 8 / 16, 2 / 16, 10 / 16],
+        [12 / 16, 4 / 16, 14 / 16, 6 / 16],
+        [3 / 16, 11 / 16, 1 / 16, 9 / 16],
+        [15 / 16, 7 / 16, 13 / 16, 5 / 16],
+      ];
+
+      const pixelSize = 4;
+      const cursorRadius = 25;
+      let time = 0;
+      let mouseX = -Infinity;
+      let mouseY = -Infinity;
+
+      window.addEventListener("mousemove", (e) => {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+      });
+
+      const resize = () => {
+        canvas.width = Math.ceil(window.innerWidth / pixelSize);
+        canvas.height = Math.ceil(window.innerHeight / pixelSize);
+      };
+      resize();
+      window.addEventListener("resize", resize);
+
+      const draw = () => {
+        const w = canvas.width;
+        const h = canvas.height;
+        const imageData = ctx.createImageData(w, h);
+        const data = imageData.data;
+
+        const mx = mouseX / pixelSize;
+        const my = mouseY / pixelSize;
+        const cr = cursorRadius / pixelSize;
+
+        for (let y = 0; y < h; y++) {
+          for (let x = 0; x < w; x++) {
+            const cx = w / 2;
+            const cy = h / 2;
+            const maxDist = Math.sqrt(cx * cx + cy * cy);
+            const dx = x - cx;
+            const dy = y - cy;
+            const dist = Math.sqrt(dx * dx + dy * dy) / maxDist;
+
+            const n =
+              Math.sin(x * 0.08 + time * 0.4) *
+              Math.cos(y * 0.06 - time * 0.3) *
+              0.15 +
+              Math.sin((x + y) * 0.04 + time * 0.2) * 0.1;
+
+            let intensity = Math.max(0, Math.min(1, (1 - dist * 0.9) * 0.2 + n));
+
+            // Cursor glow
+            const cdx = x - mx;
+            const cdy = y - my;
+            const cursorDist = Math.sqrt(cdx * cdx + cdy * cdy);
+            if (cursorDist < cr) {
+              const glow = 1 - cursorDist / cr;
+              intensity = Math.min(1, intensity + glow * 0.6);
+            }
+
+            const threshold = bayer4[y % 4][x % 4];
+            const on = intensity > threshold;
+
+            const idx = (y * w + x) * 4;
+            if (on) {
+              const cursorBright = cursorDist < cr ? (1 - cursorDist / cr) : 0;
+              const alpha = 18 + cursorBright * 80;
+              data[idx] = 220 + cursorBright * 35;
+              data[idx + 1] = 220 + cursorBright * 35;
+              data[idx + 2] = 220 + cursorBright * 35;
+              data[idx + 3] = alpha;
+            } else {
+              data[idx + 3] = 0;
+            }
+          }
+        }
+
+        ctx.putImageData(imageData, 0, 0);
+        time += 0.02;
+        requestAnimationFrame(draw);
+      };
+
+      draw();
+    </script>
+    <title>reb.gg</title>
+  </head>
+  <body>
+    <div class="container">
+      <img
+        src="/profile.webp"
+        alt="rob's face"
+        class="pic"
+        crossorigin="anonymous"
+      />
+      <div class="info">
+        <h1>Rob Herley</h1>
+        <h2>
+          Software Engineer
+          <a href="https://vercel.com" target="_blank" rel="noopener noreferrer"> ▲ Vercel</a>
+        </h2>
+        <div class="links">
+          <a href="https://github.com/robherley" target="_blank" rel="noopener noreferrer">github</a>
+          <span>■</span>
+          <a href="https://x.com/robherley" target="_blank" rel="noopener noreferrer">x</a>
+          <span>■</span>
+          <a href="https://instagram.com/robherley" target="_blank" rel="noopener noreferrer">instagram</a>
+          <span>■</span>
+          <a href="https://linkedin.com/in/robherley" target="_blank" rel="noopener noreferrer">linkedin</a>
+          <span>■</span>
+          <a href="https://blog.reb.gg" target="_blank" rel="noopener noreferrer">blog</a>
+        </div>
+      </div>
+    </div>
+
+    <canvas></canvas>
+  </body>
+</html>
