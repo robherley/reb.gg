@@ -154,15 +154,7 @@
       ];
 
       const pixelSize = 4;
-      const cursorRadius = 25;
       let time = 0;
-      let mouseX = -Infinity;
-      let mouseY = -Infinity;
-
-      window.addEventListener("mousemove", (e) => {
-        mouseX = e.clientX;
-        mouseY = e.clientY;
-      });
 
       const resize = () => {
         canvas.width = Math.ceil(window.innerWidth / pixelSize);
@@ -176,10 +168,6 @@
         const h = canvas.height;
         const imageData = ctx.createImageData(w, h);
         const data = imageData.data;
-
-        const mx = mouseX / pixelSize;
-        const my = mouseY / pixelSize;
-        const cr = cursorRadius / pixelSize;
 
         for (let y = 0; y < h; y++) {
           for (let x = 0; x < w; x++) {
@@ -196,28 +184,17 @@
               0.15 +
               Math.sin((x + y) * 0.04 + time * 0.2) * 0.1;
 
-            let intensity = Math.max(0, Math.min(1, (1 - dist * 0.9) * 0.2 + n));
-
-            // Cursor glow
-            const cdx = x - mx;
-            const cdy = y - my;
-            const cursorDist = Math.sqrt(cdx * cdx + cdy * cdy);
-            if (cursorDist < cr) {
-              const glow = 1 - cursorDist / cr;
-              intensity = Math.min(1, intensity + glow * 0.6);
-            }
+            const intensity = Math.max(0, Math.min(1, (1 - dist * 0.9) * 0.2 + n));
 
             const threshold = bayer4[y % 4][x % 4];
             const on = intensity > threshold;
 
             const idx = (y * w + x) * 4;
             if (on) {
-              const cursorBright = cursorDist < cr ? (1 - cursorDist / cr) : 0;
-              const alpha = 18 + cursorBright * 80;
-              data[idx] = 220 + cursorBright * 35;
-              data[idx + 1] = 220 + cursorBright * 35;
-              data[idx + 2] = 220 + cursorBright * 35;
-              data[idx + 3] = alpha;
+              data[idx] = 220;
+              data[idx + 1] = 220;
+              data[idx + 2] = 220;
+              data[idx + 3] = 18;
             } else {
               data[idx + 3] = 0;
             }
